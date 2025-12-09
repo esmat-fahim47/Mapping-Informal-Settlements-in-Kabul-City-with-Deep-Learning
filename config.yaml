@@ -1,0 +1,19 @@
+model:
+  class_path: SemanticSegmentationTask
+  init_args:
+    loss: "ce"                  
+    model: "unet"               
+    backbone: "resnet18"        
+    in_channels: 3              
+    num_classes: 3             
+    num_filters: 32             
+    ignore_index: null             
+    
+data:
+  class_path: KabulInformalSettlementDataModule
+  init_args:
+    batch_size: 4              
+                  
+    
+  dict_kwargs:
+    root: "C:\My Files\Semester4TUM\Prepared Dataset for Thesis - fixed class imbalance"
