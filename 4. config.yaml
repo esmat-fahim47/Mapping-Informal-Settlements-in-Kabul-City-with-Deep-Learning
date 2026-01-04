@@ -1,20 +1,23 @@
-    model:
+model:
   class_path: SemanticSegmentationTask
   init_args:
-    loss: "ce"                  
-    model: "deeplabv3plus"       
-    backbone: "resnet18"         
-    in_channels: 3               
-    num_classes: 3         
-    ignore_index: null           
-    
+    loss: "ce"
+    model: "deeplabv3+"
+    backbone: "resnet18"
+    in_channels: 3
+    num_classes: 3
+    ignore_index: null
+
 data:
   class_path: KabulInformalSettlementDataModule
   init_args:
-    batch_size: 4              
-                  
-    
+    batch_size: 4
   dict_kwargs:
-    root: "C:\My Files\Semester4TUM\Prepared Dataset for Thesis - fixed class imbalance"
+    root: "C:\\Users\\esmat\\Desktop\\2017 224x224 dataset"
 
-
+trainer:
+  max_epochs: 50
+  accelerator: "gpu"
+  devices: 1
+  precision: 32
+  log_every_n_steps: 10
