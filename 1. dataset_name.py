@@ -1,78 +1,98 @@
-# 1 the dataset_name.py file
-
-from collections.abc import Callable
-
-from matplotlib.pyplot import Figure
+from pathlib import Path
+import numpy as np
+from PIL import Image
+import torch
 from torch import Tensor
-
 from torchgeo.datasets import NonGeoDataset
-from torchgeo.datasets.utils import Path
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 
 class KabulInformalSettlementDataset(NonGeoDataset):
-    """MyNewDataset.
+    """Dataset for Kabul Informal Settlements.
 
-    Short summary of the dataset and link to its homepage.
+    Expects folder structure:
 
-    Dataset features:
+    data/
+        train/
+            images/
+            masks/
+        val/
+            images/
+            masks/
+        test/
+            images/
+            masks/
 
-    * number of classes
-    * sensors
-    * area covered
-    * etc.
-
-    Dataset format:
-
-    * what file format and shape the input data comes in
-    * what file format and shape the target data comes in
-    * possible metadata files
-
-    If you use this dataset in your research, please cite the following paper:
-
-    * URL of publication or citation information
-
-    .. versionadded:: next TorchGeo minor release version, e.g., 1.0
+    Returns:
+        sample: dict with "image" (C x H x W float tensor) and "mask" (H x W long tensor)
     """
 
-    # In this part of the code you can define class attributes such as a list of
-    # class names, color maps, url and checksums for data download, and other
-    # attributes that one might require repeatedly in the subsequent class methods.
+    # Define class colors (RGB) and their corresponding class IDs
+    CLASS_COLORS = [
+        (0, 0, 0),  # 0: Formal Settlements
+        (255, 0, 0),  # 1: Informal Settlements
+        (0, 0, 255),  # 2: Background
+        
+    ]
 
-    def __init__(
-        self,
-        root: Path = 'data',
-        split: str = 'train',
-        download: bool = False,
-    ) -> None:
-        """Initialize the dataset.
+    def __init__(self, root: str = "data", split: str = "train", transforms=None):
+        super().__init__()
+        self.root = Path(root)
+        self.split = split
+        self.transforms = transforms
 
-        The init parameters can include additional arguments, such as an option to
-        select specific image bands, data modalities, or other arguments that give
-        greater control over data loading. They should all have reasonable defaults.
+        # Paths to images and masks
+        self.images_dir = self.root / split / "images"
+        self.masks_dir = self.root / split / "masks"
 
-        Args:
-            root: root directory where dataset can be found
-            split: one of "train", "val", or "test"
-            transforms: a function/transform that takes input sample and its target as
-                entry and returns a transformed version
-            download: if True, download dataset and store it in the root directory
-        """
+        # Get sorted list of files
+        self.images = sorted(list(self.images_dir.glob("*.tif")))  # or *.png
+        self.masks = sorted(list(self.masks_dir.glob("*.png")))
+
+        # Ensure images and masks match
+        assert len(self.images) == len(self.masks), "Number of images and masks must match"
 
     def __len__(self) -> int:
-        """The length of the dataset.
-
-        This is the total number of samples per epoch, and is used to define the
-        maximum allow index that can be passed to `__getitem__`.
-        """
+        return len(self.images)
 
     def __getitem__(self, index: int) -> dict[str, Tensor]:
-        """A single sample from the dataset.
+        # Load image and mask
+        img_path = self.images[index]
+        mask_path = self.masks[index]
 
-        Load a single input image and target label or mask, and return it in a
-        dictionary.
-        """
+        img = Image.open(img_path).convert("RGB")
+        mask = Image.open(mask_path).convert("RGB")  # keep RGB for color mapping
 
-    def plot(self) -> Figure:
-        """Plot a sample of the dataset for visualization purposes
-        This might involve selecting the RGB bands, using a colormap to display a mask.
-        adding a legend with class labels, etc."""
+        # Convert image to tensor (C x H x W, float)
+        img = torch.tensor(np.array(img), dtype=torch.float32).permute(2, 0, 1) / 255.0
+
+        # Convert mask RGB to class IDs
+        mask_np = np.array(mask)
+        mask_id = np.zeros((mask_np.shape[0], mask_np.shape[1]), dtype=np.int64)
+
+        for class_id, color in enumerate(self.CLASS_COLORS):
+            equality = np.all(mask_np == color, axis=-1)
+            mask_id[equality] = class_id
+
+        mask_tensor = torch.tensor(mask_id, dtype=torch.long)
+
+        sample = {"image": img, "mask": mask_tensor}
+
+        if self.transforms:
+            sample = self.transforms(sample)
+
+        return sample
+
+    def plot(self, index: int = 0) -> Figure:
+        """Plot an image and its mask side by side."""
+        sample = self.__getitem__(index)
+        img = sample["image"].permute(1, 2, 0).numpy()
+        mask = sample["mask"].numpy()
+
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].imshow(img)
+        ax[0].set_title("Image")
+        ax[1].imshow(mask, cmap="tab20")
+        ax[1].set_title("Mask")
+        return fig
