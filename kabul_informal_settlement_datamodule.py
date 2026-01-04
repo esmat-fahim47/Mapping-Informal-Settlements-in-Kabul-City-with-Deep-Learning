@@ -1,60 +1,47 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec  9 22:51:56 2025
-
-@author: esmat
-"""
-
 import torch
 import kornia.augmentation as K
-from typing import Any
-
-
 from torchgeo.datamodules import NonGeoDataModule
-from datasets.kabul_informal_settlement_dataset import (
-    KabulInformalSettlementDataset
-)
+from datasets.kabul_informal_settlement_dataset import KabulInformalSettlementDataset
 
 class KabulInformalSettlementDatamodule(NonGeoDataModule):
-    """LightningDataModule for Kabul Informal Settlements dataset."""
 
     mean = torch.Tensor([0.485, 0.456, 0.406])
     std = torch.Tensor([0.229, 0.224, 0.225])
 
     def __init__(
-        self, batch_size: int = 64, num_workers: int = 0, size: int = 256, **kwargs: Any
+        self,
+        root: str,
+        batch_size: int = 8,       # smaller batch for large images
+        num_workers: int = 0,      # parallelize loading
     ) -> None:
         super().__init__(
             KabulInformalSettlementDataset,
             batch_size,
             num_workers,
-            **kwargs
+            root=root,
         )
 
-        self.size = size
+        self.root = root
 
         # --- Geometric augmentations for train (image + mask) ---
         self.train_geom_aug = K.AugmentationSequential(
-            K.Resize((size, size)),
             K.RandomHorizontalFlip(p=0.5),
             K.RandomVerticalFlip(p=0.5),
-            data_keys=["input", "mask"],  # ensures image and mask are augmented identically
+            data_keys=["input", "mask"],
             keepdim=True,
         )
 
         # --- Normalization for image only ---
         self.img_normalize = K.Normalize(self.mean, self.std)
 
-        # --- Validation/Test augmentation (no random flips, just resize + normalize) ---
+        # --- Validation/Test augmentation (no random flips) ---
         self.val_geom_aug = K.AugmentationSequential(
-            K.Resize((size, size)),
             data_keys=["input", "mask"],
             keepdim=True,
         )
 
     def setup(self, stage: str | None = None) -> None:
         """Set up train, val, and test datasets."""
-
         if stage in (None, "fit", "validate"):
             self.train_dataset = KabulInformalSettlementDataset(
                 split="train",
@@ -74,28 +61,21 @@ class KabulInformalSettlementDatamodule(NonGeoDataModule):
                 **self.kwargs
             )
 
-    # --- Transform functions to pass to dataset ---
+    # --- Transform functions ---
     def _train_transform(self, sample: dict) -> dict:
         img, mask = sample["image"], sample["mask"]
-
-        # Add batch dimension for Kornia
         img = img.unsqueeze(0)
         mask = mask.unsqueeze(0)
 
-        # Apply geometric augmentation
         img_aug, mask_aug = self.train_geom_aug(img, mask)
-
-        # Normalize image
         img_aug = self.img_normalize(img_aug)
 
-        # Remove batch dimension
         sample["image"] = img_aug.squeeze(0)
-        sample["mask"] = mask_aug.squeeze(0).long()  # ensure mask is long
+        sample["mask"] = mask_aug.squeeze(0).long()
         return sample
 
     def _val_transform(self, sample: dict) -> dict:
         img, mask = sample["image"], sample["mask"]
-
         img = img.unsqueeze(0)
         mask = mask.unsqueeze(0)
 
