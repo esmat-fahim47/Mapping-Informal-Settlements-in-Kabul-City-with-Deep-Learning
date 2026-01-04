@@ -9,8 +9,9 @@ import torch
 import kornia.augmentation as K
 from typing import Any
 
-from .geo import NonGeoDataModule
-from .dataset_name import KabulInformalSettlementDataset
+
+from geo import NonGeoDataModule
+from kabul_informal_settlement_dataset import KabulInformalSettlementDataset
 
 
 class KabulInformalSettlementDatamodule(NonGeoDataModule):
