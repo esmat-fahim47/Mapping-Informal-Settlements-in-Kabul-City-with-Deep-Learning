@@ -9,10 +9,9 @@ model:
     ignore_index: null
 
 data:
-  class_path: KabulInformalSettlementDatamodule.KabulInformalSettlementDatamodule   # <-- full module path
+  class_path: datasets.kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
   init_args:
     batch_size: 4
-  dict_kwargs:
     root: "C:\\Users\\esmat\\Desktop\\2017 224x224 dataset"
 
 trainer:
