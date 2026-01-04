@@ -30,13 +30,10 @@ class KabulInformalSettlementDataset(NonGeoDataset):
 
     # Define class colors (RGB) and their corresponding class IDs
     CLASS_COLORS = [
-        (250, 235, 185),  # 0: Informal Settlements
-        (200, 200, 200),  # 1: Built-Up
-        (100, 100, 150),  # 2: Impervious Surfaces
-        (80, 140, 50),    # 3: Vegetation
-        (200, 160, 40),   # 4: Barren
-        (40, 120, 240),   # 5: Water
-        (0, 0, 0),        # 6: Unlabelled
+        (0, 0, 0),  # 0: Formal Settlements
+        (255, 0, 0),  # 1: Informal Settlements
+        (0, 0, 255),  # 2: Background
+        
     ]
 
     def __init__(self, root: str = "data", split: str = "train", transforms=None):
@@ -99,3 +96,4 @@ class KabulInformalSettlementDataset(NonGeoDataset):
         ax[1].imshow(mask, cmap="tab20")
         ax[1].set_title("Mask")
         return fig
+
