@@ -10,9 +10,10 @@ import kornia.augmentation as K
 from typing import Any
 
 
-from geo import NonGeoDataModule
-from kabul_informal_settlement_dataset import KabulInformalSettlementDataset
-
+from torchgeo.datamodules import NonGeoDataModule
+from datasets.kabul_informal_settlement_dataset import (
+    KabulInformalSettlementDataset
+)
 
 class KabulInformalSettlementDatamodule(NonGeoDataModule):
     """LightningDataModule for Kabul Informal Settlements dataset."""
