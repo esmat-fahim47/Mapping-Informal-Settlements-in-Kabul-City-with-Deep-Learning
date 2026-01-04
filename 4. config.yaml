@@ -1,15 +1,15 @@
 model:
-  class_path: SemanticSegmentationTask
+  class_path: torchgeo.trainers.SemanticSegmentationTask
   init_args:
     loss: "ce"
-    model: "deeplabv3+"
+    model: "fcn"
     backbone: "resnet18"
     in_channels: 3
     num_classes: 3
     ignore_index: null
 
 data:
-  class_path: KabulInformalSettlementDataModule
+  class_path: KabulInformalSettlementDatamodule.KabulInformalSettlementDatamodule   # <-- full module path
   init_args:
     batch_size: 4
   dict_kwargs:
