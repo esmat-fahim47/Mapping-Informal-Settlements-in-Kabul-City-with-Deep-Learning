@@ -8,6 +8,7 @@ model:
     num_classes: 3
     ignore_index: null
 
+
 data:
   class_path: datasets.kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
   init_args:
