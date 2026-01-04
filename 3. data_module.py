@@ -16,8 +16,8 @@ from .dataset_name import KabulInformalSettlementDataset
 class KabulInformalSettlementDatamodule(NonGeoDataModule):
     """LightningDataModule for Kabul Informal Settlements dataset."""
 
-    mean = torch.Tensor([0.5, 0.4, 0.3])
-    std = torch.Tensor([1.5, 1.4, 1.3])
+    mean = torch.Tensor([0.485, 0.456, 0.406])
+    std = torch.Tensor([0.229, 0.224, 0.225])
 
     def __init__(
         self, batch_size: int = 64, num_workers: int = 0, size: int = 256, **kwargs: Any
