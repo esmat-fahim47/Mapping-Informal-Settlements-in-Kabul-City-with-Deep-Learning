@@ -2,18 +2,17 @@ model:
   class_path: torchgeo.trainers.SemanticSegmentationTask
   init_args:
     loss: "ce"
-    model: "fcn"
+    model: "deeplabv3+"
     backbone: "resnet18"
     in_channels: 3
     num_classes: 3
     ignore_index: null
-
-
+    
 data:
-  class_path: datasets.kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
+  class_path: kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
   init_args:
     batch_size: 4
-    root: "C:\\Users\\esmat\\Desktop\\2017 224x224 dataset"
+    root: "C:/Users/esmat/Desktop/All Datasets/2017 224x224 dataset - Alpha"
 
 trainer:
   max_epochs: 50
@@ -21,3 +20,8 @@ trainer:
   devices: 1
   precision: 32
   log_every_n_steps: 10
+  logger:
+    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    init_args:
+      save_dir: lightning_logs
+      name: torchgeo
