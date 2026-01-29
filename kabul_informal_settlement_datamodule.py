@@ -4,13 +4,24 @@ from torchgeo.datamodules import NonGeoDataModule
 from datasets.kabul_informal_settlement_dataset import KabulInformalSettlementDataset
 
 class KabulInformalSettlementDatamodule(NonGeoDataModule):
+    
+    
+    """
+    Dataset for Kabul Informal Settlements.
+    
+    Class IDs:
+    0 → Formal settlements
+    1 → Background 
+    2 → Informal settlements
+
+    """
     mean = torch.Tensor([0.485, 0.456, 0.406])
     std = torch.Tensor([0.229, 0.224, 0.225])
     
     def __init__(
         self,
         root: str,
-        batch_size: int = 8,       # smaller batch for large images
+        batch_size: int = 16,       # smaller batch for large images
         num_workers: int = 0,      # parallelize loading
     ) -> None:
         super().__init__(
@@ -20,7 +31,6 @@ class KabulInformalSettlementDatamodule(NonGeoDataModule):
             root=root,
         )
         self.root = root
-        # Don't create augmentations here - they can't be pickled, create them in setup() instead
         
     def setup(self, stage: str | None = None) -> None:
         """Set up train, val, and test datasets."""
