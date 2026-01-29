@@ -4,7 +4,7 @@ from torchgeo.samplers import GridGeoSampler
 from torch.utils.data import DataLoader
 
 class GeoDataModule(NonGeoDataModule):
-    """GeoDataModule for tiled inference on a single large GeoTIFF."""
+    """GeoDataModule for tiled inference"""
 
     def __init__(self, big_image_path: str, batch_size: int = 1, tile_size: int = 512, stride: int = 256, num_workers: int = 0):
         super().__init__(RasterDataset, batch_size=batch_size, num_workers=num_workers, root=None)
@@ -22,3 +22,4 @@ class GeoDataModule(NonGeoDataModule):
             sampler=sampler,
             num_workers=self.num_workers,
         )
+
