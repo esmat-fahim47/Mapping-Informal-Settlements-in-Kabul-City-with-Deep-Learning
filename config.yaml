@@ -1,21 +1,23 @@
 model:
-  class_path: torchgeo.trainers.SemanticSegmentationTask
+  class_path: datasets.custom_task.CustomSemanticSegmentationTask
   init_args:
-    loss: "ce"
-    model: "deeplabv3+"
+    model: "unet"
     backbone: "resnet18"
+    weights: true
     in_channels: 3
     num_classes: 3
-    ignore_index: null
-    
+    loss: "ce"
+    lr: 1e-3
+    tmax: 50
+
 data:
-  class_path: kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
+  class_path: datasets.kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
   init_args:
-    batch_size: 4
-    root: "C:/Users/esmat/Desktop/All Datasets/2017 224x224 dataset - Alpha"
+    batch_size: 16
+    root: "C:/Users/esmat/Desktop/Master Dataset - TorchGeo"
 
 trainer:
-  max_epochs: 50
+  max_epochs: 3
   accelerator: "gpu"
   devices: 1
   precision: 32
