@@ -92,7 +92,12 @@ This pipeline runs in **Jupyter Notebook** locally. The dataset should be downlo
 
 The dataset should follow this folder structure:
 
-- Masks must be single-band TIFFs with class indices `[0, num_classes-1]`.
+
+ <img width="191" height="268" alt="kela" src="https://github.com/user-attachments/assets/9bc7c6a4-d5f7-40c1-970a-4944cf5bccf8" />
+
+
+
+- Masks must be single-band TIFFs with class indices
 - The image and corresponding mask must have the same name.
 
 ---
@@ -102,10 +107,13 @@ The dataset should follow this folder structure:
 The pipeline produces:
 
 - Trained segmentation model (`.pth`)
+- Evaluation Metrics
 - Best validation checkpoint
-- Predicted masks for test images
-- Citywide segmentation GeoTIFF
-- Visualization figures
+- Predicted masks for test images (Example Below):
+- ![Picture1](https://github.com/user-attachments/assets/511d2aee-e09c-45ad-b835-a880db44a87a)
+- Citywide segmentation GeoTIFF (Example Below):
+  - <img width="488" height="429" alt="image" src="https://github.com/user-attachments/assets/cabe884f-7fe4-424e-b4a4-4eb02a978c52" />
+  - <img width="488" height="418" alt="image" src="https://github.com/user-attachments/assets/a5725014-3da8-465d-80a7-0ce01546c490" />
 
 ---
 
@@ -192,7 +200,7 @@ These augmentations are applied jointly to images and masks using **Kornia**.
 - mean = [0.485, 0.456, 0.406]
 - std = [0.229, 0.224, 0.225]
 
-- **Batch Configuration**
+**Batch Configuration**
 
 - Default settings:
 - batch_size = 16
@@ -221,7 +229,7 @@ Example Lightning configuration:
 model:
   class_path: datasets.custom_task.CustomSemanticSegmentationTask
   init_args:
-    model: "deeplabv3+"
+    model: "deeplabv3"
     backbone: "resnet101"
     weights: true
     in_channels: 3
@@ -273,15 +281,11 @@ Currently only supports training and obtaining overall F1, Precision, Recall, an
 Inference on larger images depends on newer versions of TorchGeo. Check TorchGeo GitHub
  for updates.
 
-Pipeline Components
-Containing_Folder/
-│
-├── kabul_informal_settlement_dataset.py
-├── kabul_informal_settlement_datamodule.py
-└── configs/
-    └── torchgeo_training.yaml
-Running the Pipeline
+### Pipeline Components
+- kabul_informal_settlement_dataset.py
+- kabul_informal_settlement_datamodule.py
+- config.yaml
 
+### Running the Pipeline
 Training can be launched with Lightning CLI:
-
 python train.py fit --config configs/torchgeo_training.yaml
