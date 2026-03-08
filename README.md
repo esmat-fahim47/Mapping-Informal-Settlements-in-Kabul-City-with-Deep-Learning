@@ -1,291 +1,287 @@
-# Mapping-Informal-Settlements-in-Kabul-City-with-Deep-Learning
+# Mapping Informal Settlements in Kabul with Deep Learning
 
-DeepLabV3 Informal Settlement Segmentation
+This repository implements a semantic segmentation pipeline to classify Kabul city into three classes:
 
-This repository implements a semantic segmentation pipeline using DeepLabV3 with a ResNet-101 backbone to classify urban areas into three classes:
+- **Formal settlements**
+- **Background / other land cover**
+- **Informal settlements**
 
-Formal settlements
+This project focuses on mapping informal and background areas. The workflow includes dataset preparation, model training with a custom DeepLabV3-ResNet101 backbone, testing, visualization, evaluation metrics, and citywide inference using sliding-window batch predictions.
 
-Background / other land cover
+---
 
-Informal settlements
+## Pipeline Overview
 
-The model is trained on satellite imagery patches and predicts pixel-level land-use classes.
-The pipeline includes dataset loading, training, validation, testing, evaluation metrics, patch-based inference, and city-scale sliding window prediction.
+The project follows a structured workflow:
 
-Model Architecture
+### 1. Dataset Preparation
+- Custom PyTorch Dataset class loads images and masks
+- Supports train / validation / test splits
+- Optional augmentation (horizontal and vertical flips)
+- ImageNet normalization for compatibility with pretrained ResNet backbones
 
-The model uses:
+### 2. Model Architecture
+- DeepLabV3 segmentation model
+- Custom ResNet-101 backbone wrapper
+- Pretrained ImageNet weights
+- Output classes configurable (`num_classes`)
 
-DeepLabV3 segmentation architecture
+### 3. Training
+- **Loss:** CrossEntropyLoss
+- **Optimizer:** Adam
+- **Learning rate scheduler:** StepLR
+- Early stopping with validation monitoring
+- Best checkpoint automatically saved
 
-ResNet-101 backbone pretrained on ImageNet
+### 4. Evaluation
+Model performance is evaluated using:
+- Pixel Accuracy
+- Intersection over Union (IoU)
+- Mean IoU
+- Precision
+- Recall
+- F1 Score
+- Confusion Matrix
 
-Custom dataset loader for image-mask semantic segmentation
+### 5. Prediction Output
+Predicted segmentation masks are saved as:
+- Single-band GeoTIFF
+- Pixel values correspond to class indices
 
-Key characteristics:
+### 6. Visualization of Predicted Results
+- Original satellite image
+- Ground Truth Mask
+- Predicted segmentation mask
 
-Input: RGB satellite imagery
+### 7. Citywide Inference
+Large images are processed using a sliding-window approach:
+- Overlapping patches
+- Batch inference for efficiency
+- Patch stitching with probability averaging
+- Final full-resolution segmentation map
 
-Output: 3-class semantic segmentation mask
+---
 
-Loss function: CrossEntropyLoss
+## Class Encoding
 
-Optimizer: Adam
+| Class ID | Description |
+|----------|-------------|
+| 0        | Formal      |
+| 1        | Background  |
+| 2        | Informal    |
 
-Learning rate scheduler: StepLR
+---
 
-Project Pipeline
+## Requirements / Dependencies
 
-The workflow implemented in this repository:
+This pipeline runs in **Jupyter Notebook** locally. The dataset should be downloaded and saved locally.
 
-Dataset preparation and loading
+- Python >= 3.12.3
+- Torch >= 2.5.1+cu121
+- Torchvision >= 0.20.1+cu121
+- Numpy >= 1.26.4
+- Pillow >= 10.4.0
+- Rasterio >= 1.4.3
+- Scikit-learn >= 1.5.1
+- Matplotlib >= 3.9.2
+- Natsort >= 8.4.0
 
-Data augmentation
+---
 
-Model initialization (DeepLabV3 + ResNet101)
+## Dataset Structure
 
-Training
+The dataset should follow this folder structure:
 
-Validation and checkpointing
+- Masks must be single-band TIFFs with class indices `[0, num_classes-1]`.
+- The image and corresponding mask must have the same name.
 
-Testing and metric evaluation
+---
 
-Prediction mask export
+## Output Products
 
-Visualization
+The pipeline produces:
 
-Large-scale sliding-window inference for full satellite scenes
+- Trained segmentation model (`.pth`)
+- Best validation checkpoint
+- Predicted masks for test images
+- Citywide segmentation GeoTIFF
+- Visualization figures
+
+---
+
+## Notes
+
+- GPU acceleration is automatically used if available.
+- Windows users may need to set `num_workers=0` for PyTorch DataLoader.
+- Input masks must contain class indices instead of RGB colors.
+
+---
+
+## TorchGeo Training Pipeline (Alternative / Experimental Implementation)
+
+This repository also includes an alternative training pipeline using **TorchGeo** and **PyTorch Lightning** for mapping informal settlements in Kabul city.  
+
+This pipeline replaces the manual PyTorch training loop with the TorchGeo data framework and Lightning configuration system, making the workflow more modular, reproducible, and scalable.
+
+---
+
+### Overview
+
+The TorchGeo pipeline consists of three main components:
+
+1. Dataset Class  
+2. DataModule  
+3. Lightning Training Configuration  
+
+These components handle:
+
+- Dataset loading  
+- Augmentation  
+- Normalization  
+- Batching  
+- Training configuration  
+
+---
+
+### Dataset
+
+The same dataset used in the main pipeline can be used here.
+
+#### Classes
+
+| Class ID | Description         |
+|----------|-------------------|
+| 0        | Formal settlements |
+| 1        | Background         |
+| 2        | Informal settlements |
+
+#### Expected Folder Structure
+
+- Images must be RGB `.tif` files
+- Masks must contain class indices (0,1,2)
+
+Example:
 
 
 
-Dataset Structure
 
-The dataset must follow this directory structure:
 
-dataset_root/
+The dataset loader automatically:
+
+- Loads images
+- Converts them to tensors
+- Normalizes pixel values to [0,1]
+- Loads segmentation masks
+
+---
+
+### DataModule
+
+The `KabulInformalSettlementDatamodule` manages dataset loading and preprocessing.
+
+**Data Augmentation (Training)**
+
+- Random horizontal flip
+- Random vertical flip
+
+These augmentations are applied jointly to images and masks using **Kornia**.
+
+**Normalization**
+
+- Images are normalized using ImageNet statistics:
+- mean = [0.485, 0.456, 0.406]
+- std = [0.229, 0.224, 0.225]
+
+- **Batch Configuration**
+
+- Default settings:
+- batch_size = 16
+- num_workers = 0
+
+
+---
+
+### Model Configuration
+
+The model is defined using a Lightning configuration file.
+
+- **Architecture:** DeepLabV3+
+- **Backbone:** ResNet-101
+- **Pretrained weights:** ImageNet
+- **Segmentation Classes:** `num_classes = 3`
+- **Loss Function:** Cross Entropy
+
+---
+
+### Training Configuration
+
+Example Lightning configuration:
+
+```yaml
+model:
+  class_path: datasets.custom_task.CustomSemanticSegmentationTask
+  init_args:
+    model: "deeplabv3+"
+    backbone: "resnet101"
+    weights: true
+    in_channels: 3
+    num_classes: 3
+    loss: "ce"
+    lr: 1e-3
+    tmax: 50
+
+data:
+  class_path: datasets.kabul_informal_settlement_datamodule.KabulInformalSettlementDatamodule
+  init_args:
+    batch_size: 16
+    root: "path_to_dataset"
+
+trainer:
+  max_epochs: 50
+  accelerator: "gpu"
+  devices: 1
+  precision: 32
+  log_every_n_steps: 10
+
+```
+### Logging
+
+Training logs are recorded using TensorBoard.
+
+Logs are saved in:
+
+lightning_logs/torchgeo/
+
+You can monitor training with:
+
+tensorboard --logdir lightning_logs
+
+### Advantages of the TorchGeo Pipeline
+
+Modular dataset management
+
+Clean separation of data and model logic
+
+Lightning training configuration
+
+Reproducible experiments
+
+### Disadvantages of the TorchGeo Pipeline
+
+Currently only supports training and obtaining overall F1, Precision, Recall, and Pixel Accuracy.
+
+Inference on larger images depends on newer versions of TorchGeo. Check TorchGeo GitHub
+ for updates.
+
+Pipeline Components
+Containing_Folder/
 │
-├── train/
-│   ├── image/
-│   │   ├── img_001.tif
-│   │   ├── img_002.tif
-│   │   └── ...
-│   │
-│   └── mask/
-│       ├── img_001.tif
-│       ├── img_002.tif
-│       └── ...
-│
-├── val/
-│   ├── image/
-│   └── mask/
-│
-└── test/
-    ├── image/
-    └── mask/
-
-Important requirements
-
-Images must be RGB
-
-Masks must be single-band TIFF
-
-Mask values must represent class indices
-
-0 = Formal
-1 = Background
-2 = Informal
-Installation
-
-Clone the repository:
-
-git clone https://github.com/yourusername/informal-settlement-segmentation.git
-
-cd informal-settlement-segmentation
-
-Create a virtual environment (recommended):
-
-python -m venv venv
-source venv/bin/activate
-
-Install dependencies:
-
-pip install -r requirements.txt
-Dependencies
-
-Main libraries required for this project:
-
-torch
-torchvision
-numpy
-pillow
-matplotlib
-rasterio
-scikit-learn
-natsort
-
-Optional (recommended):
-
-tqdm
-requirements.txt
-
-Example requirements.txt:
-
-torch
-torchvision
-numpy
-pillow
-matplotlib
-rasterio
-scikit-learn
-natsort
-Training
-
-To train the model:
-
-trained_model = train_model(
-    train_loader=train_loader,
-    val_loader=val_loader,
-    model=model,
-    criterion=criterion,
-    optimizer=optimizer,
-    scheduler=scheduler,
-    num_epochs=50,
-    patience=20
-)
-
-Training includes:
-
-pixel accuracy
-
-mean IoU
-
-confusion matrix
-
-F1 score
-
-precision
-
-recall
-
-The best model checkpoint is automatically saved as:
-
-best_checkpoint.pth
-Evaluation
-
-Testing is performed with:
-
-test_metrics = test_model(
-    test_loader,
-    trained_model,
-    criterion
-)
-
-Metrics computed:
-
-Global Pixel Accuracy
-
-Mean IoU
-
-IoU per class
-
-F1 Score
-
-Precision
-
-Recall
-
-Confusion Matrix
-
-Producer Accuracy
-
-User Accuracy
-
-Predicted masks are exported as:
-
-predictions/*.tif
-Visualization
-
-Predictions are visualized with a color map:
-
-Class	Color	Meaning
-0	Dark Blue	Formal
-1	Gray	Background
-2	Orange	Informal
-
-Visualization includes:
-
-Original image
-
-Ground truth mask
-
-Predicted mask
-
-Large-Scale Inference
-
-City-scale predictions are generated using sliding window inference.
-
-Parameters:
-
-Patch size: 224 × 224
-Stride: 112 (50% overlap)
-Batch size: 8
-
-Steps:
-
-Divide large satellite images into patches
-
-Predict segmentation for each patch
-
-Merge overlapping predictions
-
-Average probabilities
-
-Generate final classification map
-
-Output:
-
-predicted_mask (H × W)
-Output Example
-
-The final predicted segmentation map is converted to RGB using the class colormap and visualized using matplotlib.
-
-Model Weights
-
-After training, the final model weights are saved as:
-
-model_resnet101.pth
-
-To load for inference:
-
-model.load_state_dict(torch.load("model_resnet101.pth"))
-model.eval()
-Applications
-
-This repository is designed for:
-
-Informal settlement mapping
-
-Urban land-use classification
-
-Satellite image semantic segmentation
-
-Large-scale urban monitoring
-
-License
-
-This project is released under the MIT License.
-
-Author
-
-Esmat Tariq Fahim
-
-Research focus:
-
-Geospatial Machine Learning
-
-Remote Sensing
-
-Informal Settlement Detection
-
-Semantic Segmentation of Satellite Imagery
+├── kabul_informal_settlement_dataset.py
+├── kabul_informal_settlement_datamodule.py
+└── configs/
+    └── torchgeo_training.yaml
+Running the Pipeline
+
+Training can be launched with Lightning CLI:
+
+python train.py fit --config configs/torchgeo_training.yaml
