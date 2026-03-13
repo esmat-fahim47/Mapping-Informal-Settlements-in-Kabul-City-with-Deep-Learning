@@ -213,7 +213,7 @@ These augmentations are applied jointly to images and masks using **Kornia**.
 
 The model is defined using a Lightning configuration file.
 
-- **Architecture:** DeepLabV3+
+- **Architecture:** DeepLabV3
 - **Backbone:** ResNet-101
 - **Pretrained weights:** ImageNet
 - **Segmentation Classes:** `num_classes = 3`
